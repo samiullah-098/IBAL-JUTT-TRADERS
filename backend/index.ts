@@ -83,7 +83,15 @@ const inventoryItemMatches = (item: any, rawSearch: string) => {
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.post('/api/debug', (req, res) => res.json({ body: req.body, headers: req.headers, type: typeof req.body }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use((req, res, next) => {
+  if (Buffer.isBuffer(req.body)) {
+    try { req.body = JSON.parse(req.body.toString('utf8')); } catch (e) {}
+  } else if (typeof req.body === 'string') {
+    try { req.body = JSON.parse(req.body); } catch (e) {}
+  }
+  next();
+});
 app.use(committeeRoutes);
 app.use('/api/pos', posRoutes);
 
