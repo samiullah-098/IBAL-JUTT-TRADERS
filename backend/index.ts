@@ -83,6 +83,7 @@ const inventoryItemMatches = (item: any, rawSearch: string) => {
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
+app.post('/api/debug', (req, res) => res.json({ body: req.body, headers: req.headers, type: typeof req.body }));
 app.use(committeeRoutes);
 app.use('/api/pos', posRoutes);
 
