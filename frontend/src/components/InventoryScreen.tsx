@@ -6,7 +6,8 @@ const API_BASE = (((window as any).__API_URL__ || import.meta.env.VITE_API_URL |
 
 
 export default function InventoryScreen() {
-  const categories = ['All', 'PC', 'PV', 'Cotton', 'Staple', 'Miscellaneous Threads', 'Packaging & Supplies'];
+  const predefinedCategories = ['All', 'PC', 'PV', 'Cotton', 'Staple', 'Miscellaneous Threads', 'Packaging & Supplies'];
+  const [dynamicCategories, setDynamicCategories] = useState<string[]>(predefinedCategories);
   const [activeTab, setActiveTab] = useState('All');
   
   const [inventory, setInventory] = useState<any[]>([]);
@@ -50,7 +51,14 @@ export default function InventoryScreen() {
       
       const res = await fetch(url);
       const data = await res.json();
-      setInventory(Array.isArray(data) ? data : []);
+      const items = Array.isArray(data) ? data : [];
+      setInventory(items);
+      
+      if (category === 'All' && !search) {
+        const uniqueCats = Array.from(new Set(items.map((i:any) => i.category))).filter(Boolean) as string[];
+        const combined = Array.from(new Set([...predefinedCategories, ...uniqueCats]));
+        setDynamicCategories(combined);
+      }
     } catch (err) {
       console.error("Failed to fetch inventory", err);
     }
@@ -196,7 +204,7 @@ export default function InventoryScreen() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden h-[calc(100vh-340px)] flex flex-col">
         {/* Tabs */}
         <div className="flex overflow-x-auto border-b border-slate-100 custom-scrollbar shrink-0">
-          {categories.map((cat, i) => (
+          {dynamicCategories.map((cat, i) => (
             <button 
               key={i}
               onClick={() => setActiveTab(cat)}
@@ -453,12 +461,15 @@ export default function InventoryScreen() {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Category</label>
-                        <select 
+                        <input 
+                          list="category-options"
+                          placeholder="Type or select a category"
                           className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[var(--color-brand-accent)] focus:ring-1 focus:ring-[var(--color-brand-accent)] transition-all bg-white"
                           value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}
-                        >
-                          {categories.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                        />
+                        <datalist id="category-options">
+                          {dynamicCategories.filter(c => c !== 'All').map(c => <option key={c} value={c} />)}
+                        </datalist>
                       </div>
                       <div>
                         <label className="block text-sm font-bold text-slate-700 mb-1.5">Variant Name</label>
