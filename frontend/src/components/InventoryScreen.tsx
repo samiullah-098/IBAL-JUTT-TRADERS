@@ -34,7 +34,7 @@ export default function InventoryScreen() {
     try {
       const res = await fetch(`${API_BASE}/api/inventory/stats`);
       const data = await res.json();
-      setStats(data);
+      if (data && !data.error) setStats(data);
     } catch (err) {
       console.error("Failed to fetch stats", err);
     }
@@ -50,7 +50,7 @@ export default function InventoryScreen() {
       
       const res = await fetch(url);
       const data = await res.json();
-      setInventory(data);
+      setInventory(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch inventory", err);
     }
