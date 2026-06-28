@@ -5,7 +5,7 @@ const money = (n: any) => `Rs ${Number(n || 0).toLocaleString()}`;
 
 export const InvoicePrint = forwardRef<HTMLDivElement, InvoicePrintProps>(({ sale, amountPaidPreview }, ref) => {
   if (!sale) return null;
-  const items = sale.Items || [];
+  const items = sale.items || sale.Items || [];
   const itemSubtotal = items.reduce((sum: number, i: any) => sum + Number(i.total || 0), 0);
   const paid = Number(amountPaidPreview ?? sale.amountPaid ?? 0);
   const remaining = Math.max(0, Number(sale.amount || 0) - paid);

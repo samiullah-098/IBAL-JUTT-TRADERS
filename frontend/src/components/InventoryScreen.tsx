@@ -528,7 +528,7 @@ export default function InventoryScreen() {
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">Dynamic Pricing</h3>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
-                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Purchase Rate</label>
+                        <label className="block text-sm font-bold text-slate-700 mb-1.5">Purchase Rate (Per {formData.unit || 'Kg'})</label>
                         <div className="relative">
                           <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">Rs</span>
                           <input 
@@ -551,7 +551,7 @@ export default function InventoryScreen() {
                       </div>
                     </div>
                     <div className="bg-slate-800 rounded-lg p-4 shadow-inner">
-                       <label className="block text-slate-300 font-bold text-sm mb-1.5 uppercase tracking-wider">Sale Rate / Selling Price</label>
+                       <label className="block text-slate-300 font-bold text-sm mb-1.5 uppercase tracking-wider">Sale Rate / Selling Price (Per {formData.unit || 'Kg'})</label>
                        <div className="relative">
                          <span className="absolute left-3 top-2 text-slate-400 text-lg font-bold">Rs</span>
                          <input 

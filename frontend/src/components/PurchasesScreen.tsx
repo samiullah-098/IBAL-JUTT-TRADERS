@@ -212,7 +212,7 @@ export default function PurchasesScreen() {
   const getItemQuantity = (item: any) => {
     const weights = parseBagWeights(item.bagWeightsText || item.bagWeights);
     if (weights.length > 0) return weights.reduce((a, b) => a + b, 0);
-    return (parseFloat(item.bags) || 0) * (parseFloat(item.weightPerBag) || 0);
+    return parseFloat(item.quantity) || 0;
   };
 
   const selectedInventory = (item: any) => inventoryItems.find(inv => String(inv.id) === String(item.inventoryItemId));
@@ -590,8 +590,8 @@ export default function PurchasesScreen() {
                           const inv = selectedInventory(item);
                           const rateNote = purchaseRateNote(item);
                           
+                          const derivedQuantity = item.bagWeightsText && weights.length > 0 ? actualQuantity.toFixed(2) : item.quantity;
                           const derivedBags = item.bagWeightsText ? weights.length || '' : item.bags;
-                          const derivedWeightPerBag = item.bagWeightsText && weights.length > 0 ? (actualQuantity / weights.length).toFixed(2) : item.weightPerBag;
 
                           return (
                           <div key={idx} className="flex flex-col gap-2 p-4 bg-slate-50 border border-slate-200 rounded-lg relative">
@@ -619,22 +619,22 @@ export default function PurchasesScreen() {
                                 )}
                               </div>
                               <div className="col-span-2">
-                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Bags/Qty *</label>
-                                <input type="number" placeholder="10" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm outline-none font-bold text-center disabled:bg-slate-100 disabled:text-slate-400"
-                                  value={derivedBags} onChange={e => updateItemRow(idx, 'bags', e.target.value)} disabled={!!item.bagWeightsText} />
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Total Qty *</label>
+                                <input type="number" placeholder="Total Qty" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm outline-none font-bold text-center disabled:bg-slate-100 disabled:text-slate-400"
+                                  value={derivedQuantity} onChange={e => updateItemRow(idx, 'quantity', e.target.value)} disabled={!!item.bagWeightsText} />
                               </div>
                               <div className="col-span-2">
-                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Wt/Bag *</label>
-                                <input type="number" placeholder="45.36" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm outline-none font-bold text-center disabled:bg-slate-100 disabled:text-slate-400"
-                                  value={derivedWeightPerBag} onChange={e => updateItemRow(idx, 'weightPerBag', e.target.value)} disabled={!!item.bagWeightsText} />
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">No. of Bags (Opt)</label>
+                                <input type="number" placeholder="Bags" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm outline-none font-bold text-center disabled:bg-slate-100 disabled:text-slate-400"
+                                  value={derivedBags} onChange={e => updateItemRow(idx, 'bags', e.target.value)} disabled={!!item.bagWeightsText} />
                               </div>
                               <div className="col-span-4">
-                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Actual Bag Weights</label>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Actual Bag Weights (Overrides Qty)</label>
                                 <input type="text" placeholder="e.g. 89, 91, 87" className="w-full border border-amber-200 bg-amber-50 rounded-md px-2 py-1.5 text-sm outline-none font-bold"
                                   value={item.bagWeightsText || ''} onChange={e => updateItemRow(idx, 'bagWeightsText', e.target.value)} />
                               </div>
                               <div className="col-span-2">
-                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Purch. Rate *</label>
+                                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Purch. Rate (Per {item.unit || 'Kg'})*</label>
                                 <input type="number" placeholder="Rate" className="w-full border border-slate-200 rounded-md px-2 py-1.5 text-sm outline-none font-bold text-center"
                                   value={item.rate} onChange={e => updateItemRow(idx, 'rate', e.target.value)} />
                               </div>
