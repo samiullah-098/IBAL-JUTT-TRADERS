@@ -1,0 +1,275 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String   @default("CASHIER") // "ADMIN" or "CASHIER"
+  createdAt DateTime @default(now())
+}
+
+model InventoryItem {
+  id            Int      @id @default(autoincrement())
+  category      String   // PC, PV, Cotton, Staple, Threads, Packaging
+  variant       String   // Kachi Long, Pakki Long, Boray, etc.
+  
+  // Advanced Yarn Tracking Fields
+  yarnCount     String?  
+  millName      String?  
+  lotNumber     String?  
+  color         String?  
+  weightPerUnit Float?   
+  reorderLevel  Float    @default(10)
+  notes         String?  
+  
+  quantity      Float    @default(0)
+  unit          String   @default("kg")
+  status        String   @default("ACTIVE")
+  purchaseRate  Float    @default(0)
+  sellingMargin Float    @default(0)
+  sellingPrice  Float    @default(0)
+  
+  // Tracking Fields
+  lastPurchaseId   String?
+  lastPurchaseDate DateTime?
+  supplierName     String?
+  totalPurchaseQuantity Float @default(0)
+  totalSoldQuantity     Float @default(0)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  TransactionItems TransactionItem[]
+  PurchaseItems    PurchaseItem[]
+}
+
+model Party {
+  id              Int      @id @default(autoincrement())
+  name            String
+  type            String   // BUYER, SELLER, BOTH
+  phone           String?
+  shopName        String?  
+  cnic            String?  
+  ntn             String?  
+  city            String?  
+  address         String?
+  profileImage    String?  // Base64 string for profile picture
+  creditLimit     Float    @default(0)
+  openingBalance  Float    @default(0)
+  status          String   @default("ACTIVE")
+  outstanding     Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  Transactions    Transaction[]
+  Purchases       Purchase[]
+}
+
+model Transaction {
+  id              Int      @id @default(autoincrement())
+  partyId         Int
+  type            String   // PAYMENT_IN, PAYMENT_OUT, SALE, PURCHASE, OPENING_BALANCE
+  amount          Float
+  description     String?
+  invoiceId       String?  @unique // SALE-YYYY-XXXX format
+  discount        Float?   @default(0)
+  freight         Float?   @default(0)
+  amountPaid      Float?   @default(0)
+  date            DateTime @default(now())
+  
+  paymentMethod   String?  // CASH, BANK, CHEQUE
+  referenceNumber String?  
+  proofImage      String?  // Base64 string for receipts
+  createdAt       DateTime @default(now())
+  
+  party           Party    @relation(fields: [partyId], references: [id])
+  Items           TransactionItem[]
+}
+
+model TransactionItem {
+  id              Int           @id @default(autoincrement())
+  transactionId   Int
+  transaction     Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  inventoryItemId Int
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
+  
+  // Advanced POS Details
+  bags            Float?
+  weightPerUnit   Float?
+  unit            String?
+  note            String?
+  
+  quantity        Float
+  rate            Float
+  total           Float
+}
+
+model Purchase {
+  id           Int      @id @default(autoincrement())
+  purchaseId   String?  @unique
+  billNumber   String?
+  partyId      Int
+  purchaseDate DateTime @default(now())
+  status       String   @default("RECEIVED")
+  truckNumber  String?
+  driverPhone  String?
+  totalAmount     Float    @default(0)
+  amountPaid      Float    @default(0)
+  balanceDue      Float    @default(0)
+  notes           String?
+  paymentMethod   String?  // CASH, BANK, CHEQUE, EASYPAISA
+  paymentStatus   String?  // PAID, PARTIAL, UNPAID
+  discountType    String?  // FIXED, PER_UNIT
+  totalDiscount   Float    @default(0)
+  billImage       String?  // Base64 string
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  party Party @relation(fields: [partyId], references: [id])
+  items PurchaseItem[]
+}
+
+model PurchaseItem {
+  id              Int      @id @default(autoincrement())
+  purchaseId      Int
+  inventoryItemId Int
+  
+  // Advanced POS Details
+  bags            Float?
+  weightPerUnit   Float?
+  unit            String?
+  note            String?
+
+  quantity        Float
+  rate            Float
+  total           Float
+  itemDiscount    Float    @default(0)
+  expectedProfit  Float    @default(0)
+
+  purchase      Purchase      @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id])
+}
+
+// --- Committee / Besi / BC Management ---
+
+model Committee {
+  id                  Int      @id @default(autoincrement())
+  name                String
+  type                String   // MONTHLY, WEEKLY, CUSTOM
+  startDate           DateTime
+  endDate             DateTime?
+  totalParticipants   Int
+  installmentAmount   Float
+  totalPool           Float
+  drawDate            Int?     // Day of the month
+  winnerSelectionMethod String // MANUAL, RANDOM
+  status              String   @default("ACTIVE") // ACTIVE, COMPLETED, ARCHIVED, CANCELLED
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  participants CommitteeParticipant[]
+  months       CommitteeMonth[]
+}
+
+model CommitteeParticipant {
+  id             Int       @id @default(autoincrement())
+  committeeId    Int
+  name           String
+  phone          String?
+  cnic           String?
+  shopName       String?
+  address        String?
+  profilePicture String?
+  openingBalance Float?    @default(0)
+  notes          String?
+  status         String    @default("ACTIVE") // ACTIVE, LEFT, BLOCKED
+  participantNo  Int
+
+  committee      Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  collections    CommitteeCollection[]
+  winners        CommitteeWinner[]
+  payouts        CommitteePayout[]
+}
+
+model CommitteeMonth {
+  id           Int      @id @default(autoincrement())
+  committeeId  Int
+  monthName    String   // "June 2026"
+  startDate    DateTime
+  endDate      DateTime
+  status       String   @default("PENDING") // PENDING, COMPLETED
+  
+  committee    Committee @relation(fields: [committeeId], references: [id], onDelete: Cascade)
+  collections  CommitteeCollection[]
+  winners      CommitteeWinner[]
+}
+
+model CommitteeCollection {
+  id               Int      @id @default(autoincrement())
+  committeeId      Int
+  monthId          Int
+  participantId    Int
+  installmentAmount Float
+  paidAmount       Float    @default(0)
+  remainingAmount  Float
+  status           String   @default("PENDING") // PAID, PARTIAL, PENDING
+  paymentDate      DateTime?
+  paymentMethod    String?  
+  notes            String?
+
+  participant      CommitteeParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  month            CommitteeMonth @relation(fields: [monthId], references: [id], onDelete: Cascade)
+}
+
+model CommitteeWinner {
+  id             Int      @id @default(autoincrement())
+  committeeId    Int
+  monthId        Int
+  participantId  Int
+  totalPool      Float
+  drawDate       DateTime @default(now())
+  notes          String?
+
+  month          CommitteeMonth @relation(fields: [monthId], references: [id], onDelete: Cascade)
+  participant    CommitteeParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  payout         CommitteePayout?
+}
+
+model CommitteePayout {
+  id               Int      @id @default(autoincrement())
+  committeeId      Int
+  winnerId         Int      @unique
+  participantId    Int
+  totalPoolAmount  Float
+  deductions       Float    @default(0)
+  finalPayable     Float
+  paidAmount       Float    @default(0)
+  paymentMethod    String?
+  payoutDate       DateTime?
+  proof            String?
+  notes            String?
+  status           String   @default("PENDING") // PENDING, PARTIAL, PAID
+
+  winner           CommitteeWinner @relation(fields: [winnerId], references: [id], onDelete: Cascade)
+  participant      CommitteeParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+}
+
+model CommitteeAuditLog {
+  id             Int      @id @default(autoincrement())
+  committeeId    Int
+  participantId  Int?
+  action         String   // e.g., DRAW_WINNER, MANUAL_WINNER, PAYMENT_ADDED, PAYOUT_ADDED
+  description    String
+  timestamp      DateTime @default(now())
+}

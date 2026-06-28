@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "outDir": "dist",
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "strict": false,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "ignoreDeprecations": "5.0"
+  },
+  "include": [
+    "index.ts",
+    "committeeRoutes.ts",
+    "posRoutes.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "businessName": "IQBAL JUTT TRADER",
+  "businessPhone": "0300-1234567",
+  "businessAddress": "Main Yarn Market",
+  "city": "Sanghar",
+  "currency": "Rs",
+  "invoiceNote": "Thank you for your business.",
+  "lowStockLevel": 10,
+  "autoBackupEnabled": true,
+  "backupTime": "23:30",
+  "allowDataReset": true,
+  "requireResetConfirmation": true
+}

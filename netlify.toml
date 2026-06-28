@@ -1,0 +1,20 @@
+[build]
+  command = "cd backend && npm install && npx prisma generate && npx prisma db push && cd ../frontend && npm install && npm run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@prisma/client", "serverless-http", "express", "cors"]
+  included_files = ["backend/prisma/**"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

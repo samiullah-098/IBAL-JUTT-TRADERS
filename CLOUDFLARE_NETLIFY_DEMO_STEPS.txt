@@ -1,0 +1,42 @@
+IQBAL JUTT TRADER - FAST CLIENT DEMO USING NETLIFY + CLOUDFLARE TUNNEL
+
+WHAT THIS PACKAGE DOES
+1. Backend runs from your PC on http://localhost:5000
+2. Cloudflare Tunnel gives your backend a temporary HTTPS public URL
+3. Frontend runs from Netlify and calls that Cloudflare backend URL
+4. Client uses the Netlify link for demo
+
+IMPORTANT
+- Keep your PC ON.
+- Keep both backend and cloudflared terminal windows OPEN.
+- If PC sleeps/shuts down, client demo backend will stop.
+- Cloudflare quick tunnel URL can change when restarted, so rebuild/reupload config if URL changes.
+
+STEP 1 - Run backend + tunnel
+Double-click:
+RUN_BACKEND_CLOUDFLARE_DEMO.bat
+
+Copy the URL like:
+https://abc-xyz.trycloudflare.com
+
+STEP 2 - Build Netlify ZIP using that URL
+Double-click:
+SET_TUNNEL_URL_AND_BUILD_NETLIFY_DIST.bat
+
+Paste the Cloudflare URL.
+It will create:
+NETLIFY_UPLOAD_WITH_TUNNEL.zip
+
+STEP 3 - Upload to Netlify
+Go to Netlify > Deploys > drag and drop NETLIFY_UPLOAD_WITH_TUNNEL.zip
+
+STEP 4 - Test
+Open Netlify link.
+Login:
+Username: admin
+Password: admin
+PIN: optional/1234 depending on your current settings.
+
+STEP 5 - Client demo
+Send client only the Netlify link.
+Do not send Cloudflare URL directly.
