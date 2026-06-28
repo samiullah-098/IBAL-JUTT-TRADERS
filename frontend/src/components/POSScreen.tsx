@@ -171,18 +171,18 @@ export default function POSScreen() {
     setSelectedItem(item);
     
     if (cartItemToEdit) {
-      setInputBags(cartItemToEdit.bags.toString());
-      setInputWeightPerBag(cartItemToEdit.weightPerBag.toString());
-      setInputTotalWeight(cartItemToEdit.totalWeight.toString());
+      setInputBags(cartItemToEdit.bags ? cartItemToEdit.bags.toString() : '');
+      setInputWeightPerBag(cartItemToEdit.weightPerBag ? cartItemToEdit.weightPerBag.toString() : '');
+      setInputTotalWeight(cartItemToEdit.totalWeight ? cartItemToEdit.totalWeight.toString() : '');
       setInputUnit(cartItemToEdit.unit);
       setInputRate(cartItemToEdit.rate.toString());
       setInputNote(cartItemToEdit.note);
       setSelectedBagIds(cartItemToEdit.selectedBagIds || []);
       setEditingCartId(cartItemToEdit.id);
     } else {
-      setInputBags('1');
-      setInputWeightPerBag(item.weightPerUnit ? item.weightPerUnit.toString() : '45.36');
-      setInputTotalWeight(item.weightPerUnit ? item.weightPerUnit.toString() : '45.36');
+      setInputBags('');
+      setInputWeightPerBag('');
+      setInputTotalWeight('');
       setInputUnit(item.unit || 'Kg');
       setInputRate(item.sellingPrice.toString());
       setInputNote('');
@@ -378,7 +378,7 @@ export default function POSScreen() {
   const displayedInventory = selectedCategory === 'All' ? inventory : inventory.filter(i => i.category === selectedCategory);
 
   return (
-    <div className="pos-screen max-w-[1800px] mx-auto pb-28 lg:pb-6 min-h-0 lg:h-[calc(100vh-20px)] flex flex-col relative bg-slate-50 overflow-y-auto lg:overflow-hidden pt-2 lg:pt-4">
+    <div className="pos-screen max-w-[1800px] mx-auto pb-28 lg:pb-6 min-h-0 lg:h-[calc(100vh-20px)] flex flex-col relative bg-slate-50 overflow-y-auto lg:overflow-hidden print:h-auto print:overflow-visible pt-2 lg:pt-4">
       
       <div className="pos-workspace flex flex-col lg:flex-row gap-3 lg:gap-4 flex-1 lg:h-[calc(100vh-60px)] px-2 sm:px-4 print:hidden">
         

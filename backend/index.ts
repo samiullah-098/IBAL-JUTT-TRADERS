@@ -2143,25 +2143,37 @@ app.post('/api/settings/reset-all', async (req, res) => {
       return res.status(400).json({ error: 'Invalid confirmation text' });
     }
     const backup = await createDatabaseBackup('pre-reset');
-    await prisma.$transaction(async (tx) => {
-      await tx.inventoryBag.deleteMany();
-      await tx.committeeAuditLog.deleteMany();
-      await tx.committeePayout.deleteMany();
-      await tx.committeeWinner.deleteMany();
-      await tx.committeeCollection.deleteMany();
-      await tx.committeeMonth.deleteMany();
-      await tx.committeeParticipant.deleteMany();
-      await tx.committee.deleteMany();
-      await tx.transactionItem.deleteMany();
-      await tx.transaction.deleteMany();
-      await tx.purchaseItem.deleteMany();
-      await tx.purchase.deleteMany();
-      await tx.inventoryItem.deleteMany();
-      await tx.party.deleteMany();
-    });
-    try {
-      await prisma.$executeRawUnsafe("DELETE FROM sqlite_sequence WHERE name IN ('InventoryItem','Party','Transaction','TransactionItem','Purchase','PurchaseItem','Committee','CommitteeParticipant','CommitteeMonth','CommitteeCollection','CommitteeWinner','CommitteePayout','CommitteeAuditLog','Expense','Quotation','QuotationItem','StaffSalaryPayment')");
-    } catch {}
+    const isPostgres = String(process.env.DATABASE_URL || '').startsWith('postgres');
+    if (isPostgres) {
+      try { await prisma.$executeRawUnsafe(`TRUNCATE TABLE "InventoryItem", "Party", "Transaction", "TransactionItem", "Purchase", "PurchaseItem", "Committee", "CommitteeParticipant", "CommitteeMonth", "CommitteeCollection", "CommitteeWinner", "CommitteePayout", "CommitteeAuditLog", "InventoryBag", "Expense", "Quotation", "QuotationItem", "StaffProfile", "StaffSalaryPayment" CASCADE`); } catch(e) { console.error('Reset Truncate Error:', e); }
+    } else {
+      await prisma.$transaction(async (tx) => {
+        await tx.inventoryBag.deleteMany();
+        await tx.committeeAuditLog.deleteMany();
+        await tx.committeePayout.deleteMany();
+        await tx.committeeWinner.deleteMany();
+        await tx.committeeCollection.deleteMany();
+        await tx.committeeMonth.deleteMany();
+        await tx.committeeParticipant.deleteMany();
+        await tx.committee.deleteMany();
+        await tx.transactionItem.deleteMany();
+        await tx.transaction.deleteMany();
+        await tx.purchaseItem.deleteMany();
+        await tx.purchase.deleteMany();
+        await tx.inventoryItem.deleteMany();
+        await tx.party.deleteMany();
+      });
+      try {
+        await prisma.$executeRawUnsafe(`DELETE FROM Expense`);
+        await prisma.$executeRawUnsafe(`DELETE FROM QuotationItem`);
+        await prisma.$executeRawUnsafe(`DELETE FROM Quotation`);
+        await prisma.$executeRawUnsafe(`DELETE FROM StaffSalaryPayment`);
+        await prisma.$executeRawUnsafe(`DELETE FROM StaffProfile`);
+      } catch(e) { console.error(e); }
+      try {
+        await prisma.$executeRawUnsafe("DELETE FROM sqlite_sequence WHERE name IN ('InventoryItem','Party','Transaction','TransactionItem','Purchase','PurchaseItem','Committee','CommitteeParticipant','CommitteeMonth','CommitteeCollection','CommitteeWinner','CommitteePayout','CommitteeAuditLog','Expense','Quotation','QuotationItem','StaffProfile','StaffSalaryPayment')");
+      } catch {}
+    }
     res.json({ success: true, message: 'All business data has been reset. A pre-reset backup was created first.', backup });
   } catch (error) {
     console.error(error);
@@ -2470,7 +2482,7 @@ app.post('/api/expenses', async (req, res) => {
     await ensureExtraTables();
     const d = req.body || {};
     await prisma.$executeRawUnsafe(`INSERT INTO Expense (title, category, amount, expenseDate, paymentMethod, paidTo, phone, referenceNumber, notes, proofImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      q(d.title), q(d.category) || 'General', num(d.amount), (toSqlDate(d.expenseDate) || new Date()).toISOString(), q(d.paymentMethod) || 'CASH', q(d.paidTo), q(d.phone), q(d.referenceNumber), q(d.notes), d.proofImage || null);
+      q(d.title), q(d.category) || 'General', num(d.amount), toSqlDate(d.expenseDate) || new Date(), q(d.paymentMethod) || 'CASH', q(d.paidTo), q(d.phone), q(d.referenceNumber), q(d.notes), d.proofImage || null);
     const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Expense ORDER BY id DESC LIMIT 1`);
     res.json({ success: true, expense: rows[0] });
   } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to create expense', details: error?.message || String(error) }); }
@@ -2479,7 +2491,7 @@ app.put('/api/expenses/:id', async (req, res) => {
   try {
     const d = req.body || {};
     await prisma.$executeRawUnsafe(`UPDATE Expense SET title=?, category=?, amount=?, expenseDate=?, paymentMethod=?, paidTo=?, phone=?, referenceNumber=?, notes=?, proofImage=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?`,
-      q(d.title), q(d.category) || 'General', num(d.amount), (toSqlDate(d.expenseDate) || new Date()).toISOString(), q(d.paymentMethod) || 'CASH', q(d.paidTo), q(d.phone), q(d.referenceNumber), q(d.notes), d.proofImage || null, Number(req.params.id));
+      q(d.title), q(d.category) || 'General', num(d.amount), toSqlDate(d.expenseDate) || new Date(), q(d.paymentMethod) || 'CASH', q(d.paidTo), q(d.phone), q(d.referenceNumber), q(d.notes), d.proofImage || null, Number(req.params.id));
     const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Expense WHERE id=?`, Number(req.params.id));
     res.json({ success: true, expense: rows[0] });
   } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to update expense', details: error?.message || String(error) }); }
@@ -2507,7 +2519,7 @@ app.post('/api/quotations', async (req, res) => {
     const quotationId = `QUO-${year}-${String(Number(countRows[0]?.c || 0) + 1).padStart(4, '0')}`;
     const totalAmount = items.reduce((a: number, i: any) => a + num(i.total || (num(i.quantity) * num(i.expectedRate))), 0);
     await prisma.$executeRawUnsafe(`INSERT INTO Quotation (quotationId, supplierId, supplierName, supplierPhone, validUntil, status, notes, totalAmount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      quotationId, d.supplierId ? Number(d.supplierId) : null, q(d.supplierName), q(d.supplierPhone), d.validUntil ? new Date(d.validUntil).toISOString() : null, q(d.status) || 'DRAFT', q(d.notes), totalAmount);
+      quotationId, d.supplierId ? Number(d.supplierId) : null, q(d.supplierName), q(d.supplierPhone), d.validUntil ? new Date(d.validUntil) : null, q(d.status) || 'DRAFT', q(d.notes), totalAmount);
     const quoteRows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Quotation WHERE quotationId=?`, quotationId);
     const quote = quoteRows[0];
     for (const i of items) {
@@ -2540,8 +2552,8 @@ app.get('/api/general-ledger', async (req, res) => {
       const credit = ['PURCHASE', 'PAYMENT_IN'].includes(t.type) ? t.amount : 0;
       entries.push({ date: t.date, module: t.type === 'SALE' ? 'Sales' : t.type === 'PURCHASE' ? 'Purchases' : 'Khata/Payment', reference: t.invoiceId || t.referenceNumber || t.id, party: t.party?.name || '-', description: t.description || t.type, debit, credit, amount: t.amount, detail: t });
     });
-    expenses.forEach(e => entries.push({ date: e.expenseDate, module: 'Expenses', reference: e.referenceNumber || e.id, party: e.paidTo || '-', description: e.title, debit: Number(e.amount||0), credit: 0, amount: Number(e.amount||0), detail: e }));
-    salaries.forEach(s => entries.push({ date: s.paymentDate, module: 'Staff Salary', reference: s.id, party: s.staffName || '-', description: `Salary payment ${s.salaryMonth || ''}`, debit: Number(s.amount||0), credit: 0, amount: Number(s.amount||0), detail: s }));
+    expenses.forEach(e => entries.push({ date: e.expenseDate || e.expensedate, module: 'Expenses', reference: e.referenceNumber || e.referencenumber || e.id, party: e.paidTo || e.paidto || '-', description: e.title, debit: Number(e.amount||0), credit: 0, amount: Number(e.amount||0), detail: e }));
+    salaries.forEach(s => entries.push({ date: s.paymentDate || s.paymentdate, module: 'Staff Salary', reference: s.id, party: s.staffName || s.staffname || '-', description: `Salary payment ${s.salaryMonth || s.salarymonth || ''}`, debit: Number(s.amount||0), credit: 0, amount: Number(s.amount||0), detail: s }));
     entries.sort((a,b)=> new Date(a.date).getTime() - new Date(b.date).getTime());
     let balance = 0;
     const rows = entries.map(e => { balance += Number(e.debit || 0) - Number(e.credit || 0); return { ...e, balance }; });
@@ -2557,10 +2569,13 @@ app.get('/api/staff', async (_req, res) => {
 app.post('/api/staff', async (req, res) => {
   try {
     await ensureExtraTables(); const d = req.body || {};
-    const user = await prisma.user.create({ data: { username: q(d.username) || q(d.phone) || `staff${Date.now()}`, password: q(d.password) || '1234', role: q(d.role) || 'STAFF' } });
+    let username = q(d.username) || q(d.phone) || `staff${Date.now()}`;
+    const existing = await prisma.user.findFirst({ where: { username } });
+    if (existing) username = `${username}_${Math.floor(Math.random() * 1000)}`;
+    const user = await prisma.user.create({ data: { username, password: q(d.password) || '1234', role: q(d.role) || 'STAFF' } });
     await prisma.$executeRawUnsafe(`INSERT INTO StaffProfile (userId, name, phone, cnic, salary, profileImage, address, role, pin, permissions, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       user.id, q(d.name), q(d.phone), q(d.cnic), num(d.salary), d.profileImage || null, q(d.address), q(d.role) || 'STAFF', q(d.pin) || '1234', JSON.stringify(d.permissions || []), q(d.status) || 'ACTIVE');
-    res.json({ success: true, message: 'Staff created' });
+    res.json({ success: true, message: 'Staff created', username });
   } catch (error: any) { console.error(error); res.status(500).json({ error: error?.message || 'Failed to create staff' }); }
 });
 app.put('/api/staff/:id', async (req, res) => {
@@ -2586,7 +2601,7 @@ app.get('/api/staff/:id/salary', async (req, res) => {
   catch (error) { res.status(500).json({ error: 'Failed to fetch salary history', details: error?.message || String(error) }); }
 });
 app.post('/api/staff/:id/salary', async (req, res) => {
-  try { const d=req.body||{}; await prisma.$executeRawUnsafe(`INSERT INTO StaffSalaryPayment (staffId, amount, salaryMonth, paymentDate, paymentMethod, notes) VALUES (?, ?, ?, ?, ?, ?)`, Number(req.params.id), num(d.amount), q(d.salaryMonth), (toSqlDate(d.paymentDate)||new Date()).toISOString(), q(d.paymentMethod)||'CASH', q(d.notes)); res.json({ success: true, message: 'Salary payment saved' }); }
+  try { const d=req.body||{}; await prisma.$executeRawUnsafe(`INSERT INTO StaffSalaryPayment (staffId, amount, salaryMonth, paymentDate, paymentMethod, notes) VALUES (?, ?, ?, ?, ?, ?)`, Number(req.params.id), num(d.amount), q(d.salaryMonth), toSqlDate(d.paymentDate)||new Date(), q(d.paymentMethod)||'CASH', q(d.notes)); res.json({ success: true, message: 'Salary payment saved' }); }
   catch (error) { res.status(500).json({ error: 'Failed to save salary payment', details: error?.message || String(error) }); }
 });
 
