@@ -113,7 +113,7 @@ app.get('/api/inventory', async (req, res) => {
     res.json(filtered);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch inventory' });
+    res.status(500).json({ error: 'Failed to fetch inventory', details: error?.message || String(error) });
   }
 });
 
@@ -163,7 +163,7 @@ app.post('/api/inventory', async (req, res) => {
     res.json(newItem);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create item' });
+    res.status(500).json({ error: 'Failed to create item', details: error?.message || String(error) });
   }
 });
 
@@ -221,7 +221,7 @@ app.put('/api/inventory/:id', async (req, res) => {
     res.json(updatedItem);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to update item' });
+    res.status(500).json({ error: 'Failed to update item', details: error?.message || String(error) });
   }
 });
 
@@ -253,7 +253,7 @@ app.delete('/api/inventory/:id', async (req, res) => {
     }
   } catch (error) {
     console.error("Delete Error", error);
-    res.status(500).json({ error: 'Failed to delete item' });
+    res.status(500).json({ error: 'Failed to delete item', details: error?.message || String(error) });
   }
 });
 
@@ -279,7 +279,7 @@ app.get('/api/purchases', async (req, res) => {
     res.json(purchases);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch purchases' });
+    res.status(500).json({ error: 'Failed to fetch purchases', details: error?.message || String(error) });
   }
 });
 
@@ -485,7 +485,7 @@ app.post('/api/purchases', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create purchase' });
+    res.status(500).json({ error: 'Failed to create purchase', details: error?.message || String(error) });
   }
 });
 
@@ -544,7 +544,7 @@ app.get('/api/suppliers/:id/analysis', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch supplier analysis' });
+    res.status(500).json({ error: 'Failed to fetch supplier analysis', details: error?.message || String(error) });
   }
 });
 
@@ -591,7 +591,7 @@ app.delete('/api/purchases/:id', async (req, res) => {
     res.json({ success: true, message: 'Purchase deleted and inventory/khata reversed successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to delete purchase' });
+    res.status(500).json({ error: 'Failed to delete purchase', details: error?.message || String(error) });
   }
 });
 
@@ -609,7 +609,7 @@ app.get('/api/sales', async (req, res) => {
     res.json(sales);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch sales' });
+    res.status(500).json({ error: 'Failed to fetch sales', details: error?.message || String(error) });
   }
 });
 
@@ -753,7 +753,7 @@ app.post('/api/sales', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create sale' });
+    res.status(500).json({ error: 'Failed to create sale', details: error?.message || String(error) });
   }
 });
 // -- Advanced Party Khata APIs --
@@ -775,7 +775,7 @@ app.get('/api/parties', async (req, res) => {
     });
     res.json(parties);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch parties' });
+    res.status(500).json({ error: 'Failed to fetch parties', details: error?.message || String(error) });
   }
 });
 
@@ -784,7 +784,7 @@ app.get('/api/customers', async (req, res) => {
     const customers = await prisma.party.findMany({ where: { OR: [{ type: 'BUYER' }, { type: 'BOTH' }] } });
     res.json(customers);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch customers' });
+    res.status(500).json({ error: 'Failed to fetch customers', details: error?.message || String(error) });
   }
 });
 
@@ -824,7 +824,7 @@ app.post('/api/customers/quick-add', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to quick add customer' });
+    res.status(500).json({ error: 'Failed to quick add customer', details: error?.message || String(error) });
   }
 });
 
@@ -851,7 +851,7 @@ app.get('/api/suppliers', async (req, res) => {
     });
     res.json(suppliers);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch suppliers' });
+    res.status(500).json({ error: 'Failed to fetch suppliers', details: error?.message || String(error) });
   }
 });
 
@@ -894,7 +894,7 @@ app.post('/api/parties', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create party' });
+    res.status(500).json({ error: 'Failed to create party', details: error?.message || String(error) });
   }
 });
 
@@ -923,7 +923,7 @@ app.get('/api/parties/:id/ledger', async (req, res) => {
     
     res.json({ party, ledger: ledgerWithBalance });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch ledger' });
+    res.status(500).json({ error: 'Failed to fetch ledger', details: error?.message || String(error) });
   }
 });
 
@@ -983,7 +983,7 @@ app.get('/api/customers/:id/analysis', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch customer analysis' });
+    res.status(500).json({ error: 'Failed to fetch customer analysis', details: error?.message || String(error) });
   }
 });
 
@@ -1026,7 +1026,7 @@ app.post('/api/parties/:id/transactions', async (req, res) => {
     
     res.json(result);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to add transaction' });
+    res.status(500).json({ error: 'Failed to add transaction', details: error?.message || String(error) });
   }
 });
 
@@ -1042,7 +1042,7 @@ app.delete('/api/parties/:id', async (req, res) => {
     await prisma.party.delete({ where: { id: Number(id) } });
     res.json({ success: true });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete party' });
+    res.status(500).json({ error: 'Failed to delete party', details: error?.message || String(error) });
   }
 });
 
@@ -1078,7 +1078,7 @@ app.get('/api/pos/items/search', async (req, res) => {
     
     res.json(items);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to search POS items' });
+    res.status(500).json({ error: 'Failed to search POS items', details: error?.message || String(error) });
   }
 });
 
@@ -1092,7 +1092,7 @@ app.get('/api/pos/recent-items', async (req, res) => {
     });
     res.json(items);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch recent POS items' });
+    res.status(500).json({ error: 'Failed to fetch recent POS items', details: error?.message || String(error) });
   }
 });
 
@@ -1140,7 +1140,7 @@ app.get('/api/pos/today-summary', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch POS today summary' });
+    res.status(500).json({ error: 'Failed to fetch POS today summary', details: error?.message || String(error) });
   }
 });
 
@@ -1188,7 +1188,7 @@ app.get('/api/dashboard', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch dashboard metrics' });
+    res.status(500).json({ error: 'Failed to fetch dashboard metrics', details: error?.message || String(error) });
   }
 });
 
@@ -1236,7 +1236,7 @@ app.get('/api/inventory/:id/details', async (req, res) => {
     res.json({ item, metrics: { stockValue, potentialProfit }, purchaseHistory, saleHistory });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch inventory item details' });
+    res.status(500).json({ error: 'Failed to fetch inventory item details', details: error?.message || String(error) });
   }
 });
 
@@ -1270,7 +1270,7 @@ app.get('/api/inventory/stats', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch inventory stats' });
+    res.status(500).json({ error: 'Failed to fetch inventory stats', details: error?.message || String(error) });
   }
 });
 
@@ -1607,7 +1607,7 @@ app.get('/api/dashboard/advanced', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch advanced dashboard' });
+    res.status(500).json({ error: 'Failed to fetch advanced dashboard', details: error?.message || String(error) });
   }
 });
 
@@ -1843,7 +1843,7 @@ app.get('/api/reports/run/:key', async (req, res) => {
     res.json({ report, summary, rows, generatedAt: new Date().toISOString() });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to run report' });
+    res.status(500).json({ error: 'Failed to run report', details: error?.message || String(error) });
   }
 });
 
@@ -1871,7 +1871,7 @@ app.get('/api/settings', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch settings' });
+    res.status(500).json({ error: 'Failed to fetch settings', details: error?.message || String(error) });
   }
 });
 
@@ -1881,7 +1881,7 @@ app.put('/api/settings', async (req, res) => {
     res.json({ success: true, settings: saved });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to save settings' });
+    res.status(500).json({ error: 'Failed to save settings', details: error?.message || String(error) });
   }
 });
 
@@ -1889,7 +1889,7 @@ app.get('/api/settings/backups', (req, res) => {
   try {
     res.json({ backups: listBackups() });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to list backups' });
+    res.status(500).json({ error: 'Failed to list backups', details: error?.message || String(error) });
   }
 });
 
@@ -1899,7 +1899,7 @@ app.post('/api/settings/backup/manual', (req, res) => {
     res.json({ success: true, message: 'Manual backup created successfully', backup });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create manual backup' });
+    res.status(500).json({ error: 'Failed to create manual backup', details: error?.message || String(error) });
   }
 });
 
@@ -1935,7 +1935,7 @@ app.post('/api/settings/reset-all', async (req, res) => {
     res.json({ success: true, message: 'All business data has been reset. A pre-reset backup was created first.', backup });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to reset data' });
+    res.status(500).json({ error: 'Failed to reset data', details: error?.message || String(error) });
   }
 });
 
@@ -1978,7 +1978,7 @@ app.get('/api/reports/khata', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch khata reports' });
+    res.status(500).json({ error: 'Failed to fetch khata reports', details: error?.message || String(error) });
   }
 });
 
@@ -2098,7 +2098,7 @@ app.get('/api/auth/status', async (_req, res) => {
     const users = await prisma.user.count();
     res.json({ success: true, loginEnabled: true, users, brandName: fixedBrandName });
   } catch (error) {
-    res.status(500).json({ error: 'Auth status failed' });
+    res.status(500).json({ error: 'Auth status failed', details: error?.message || String(error) });
   }
 });
 
@@ -2129,7 +2129,7 @@ app.post('/api/auth/login', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Login failed' });
+    res.status(500).json({ error: 'Login failed', details: error?.message || String(error) });
   }
 });
 
@@ -2213,7 +2213,7 @@ app.get('/api/dashboard/detailed', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch detailed dashboard' });
+    res.status(500).json({ error: 'Failed to fetch detailed dashboard', details: error?.message || String(error) });
   }
 });
 
@@ -2229,11 +2229,11 @@ app.get('/api/expenses', async (req, res) => {
     if (s) rows = rows.filter(r => normalizeText([r.title, r.category, r.paidTo, r.phone, r.referenceNumber, r.notes].join(' ')).includes(s));
     const total = rows.reduce((a, r) => a + Number(r.amount || 0), 0);
     res.json({ success: true, rows, summary: { count: rows.length, total } });
-  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to fetch expenses' }); }
+  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to fetch expenses', details: error?.message || String(error) }); }
 });
 app.get('/api/expenses/:id', async (req, res) => {
   try { const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Expense WHERE id = ?`, Number(req.params.id)); res.json(rows[0] || null); }
-  catch (error) { res.status(500).json({ error: 'Failed to fetch expense' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to fetch expense', details: error?.message || String(error) }); }
 });
 app.post('/api/expenses', async (req, res) => {
   try {
@@ -2243,7 +2243,7 @@ app.post('/api/expenses', async (req, res) => {
       q(d.title), q(d.category) || 'General', num(d.amount), (toSqlDate(d.expenseDate) || new Date()).toISOString(), q(d.paymentMethod) || 'CASH', q(d.paidTo), q(d.phone), q(d.referenceNumber), q(d.notes), d.proofImage || null);
     const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Expense ORDER BY id DESC LIMIT 1`);
     res.json({ success: true, expense: rows[0] });
-  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to create expense' }); }
+  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to create expense', details: error?.message || String(error) }); }
 });
 app.put('/api/expenses/:id', async (req, res) => {
   try {
@@ -2252,21 +2252,21 @@ app.put('/api/expenses/:id', async (req, res) => {
       q(d.title), q(d.category) || 'General', num(d.amount), (toSqlDate(d.expenseDate) || new Date()).toISOString(), q(d.paymentMethod) || 'CASH', q(d.paidTo), q(d.phone), q(d.referenceNumber), q(d.notes), d.proofImage || null, Number(req.params.id));
     const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Expense WHERE id=?`, Number(req.params.id));
     res.json({ success: true, expense: rows[0] });
-  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to update expense' }); }
+  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to update expense', details: error?.message || String(error) }); }
 });
 app.delete('/api/expenses/:id', async (req, res) => {
   try { await prisma.$executeRawUnsafe(`DELETE FROM Expense WHERE id=?`, Number(req.params.id)); res.json({ success: true, message: 'Expense deleted' }); }
-  catch (error) { res.status(500).json({ error: 'Failed to delete expense' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to delete expense', details: error?.message || String(error) }); }
 });
 
 // Supplier quotations
 app.get('/api/quotations', async (_req, res) => {
   try { await ensureExtraTables(); const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Quotation ORDER BY createdAt DESC, id DESC`); res.json({ success: true, rows }); }
-  catch (error) { res.status(500).json({ error: 'Failed to fetch quotations' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to fetch quotations', details: error?.message || String(error) }); }
 });
 app.get('/api/quotations/:id', async (req, res) => {
   try { const quotes: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM Quotation WHERE id=?`, Number(req.params.id)); const items: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM QuotationItem WHERE quotationRowId=?`, Number(req.params.id)); res.json({ success: true, quotation: quotes[0] || null, items }); }
-  catch (error) { res.status(500).json({ error: 'Failed to fetch quotation' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to fetch quotation', details: error?.message || String(error) }); }
 });
 app.post('/api/quotations', async (req, res) => {
   try {
@@ -2286,11 +2286,11 @@ app.post('/api/quotations', async (req, res) => {
         quote.id, i.inventoryItemId ? Number(i.inventoryItemId) : null, q(i.itemName), q(i.category), q(i.lotNumber), q(i.millName), q(i.quality), q(i.unit) || 'Kg', num(i.quantity), num(i.expectedRate), total, q(i.notes));
     }
     res.json({ success: true, quotation: quote });
-  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to create quotation' }); }
+  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to create quotation', details: error?.message || String(error) }); }
 });
 app.delete('/api/quotations/:id', async (req, res) => {
   try { await prisma.$executeRawUnsafe(`DELETE FROM QuotationItem WHERE quotationRowId=?`, Number(req.params.id)); await prisma.$executeRawUnsafe(`DELETE FROM Quotation WHERE id=?`, Number(req.params.id)); res.json({ success: true }); }
-  catch (error) { res.status(500).json({ error: 'Failed to delete quotation' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to delete quotation', details: error?.message || String(error) }); }
 });
 
 // General Ledger
@@ -2316,13 +2316,13 @@ app.get('/api/general-ledger', async (req, res) => {
     let balance = 0;
     const rows = entries.map(e => { balance += Number(e.debit || 0) - Number(e.credit || 0); return { ...e, balance }; });
     res.json({ success: true, rows: rows.reverse(), summary: { entries: rows.length, debit: rows.reduce((a,r)=>a+Number(r.debit||0),0), credit: rows.reduce((a,r)=>a+Number(r.credit||0),0), balance } });
-  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to fetch general ledger' }); }
+  } catch (error) { console.error(error); res.status(500).json({ error: 'Failed to fetch general ledger', details: error?.message || String(error) }); }
 });
 
 // Staff and salary
 app.get('/api/staff', async (_req, res) => {
   try { await ensureExtraTables(); const rows: any[] = await prisma.$queryRawUnsafe(`SELECT sp.*, u.username, u.role AS userRole FROM StaffProfile sp LEFT JOIN "User" u ON u.id = sp.userId ORDER BY sp.createdAt DESC`); res.json({ success: true, rows: rows.map(r => ({ ...r, permissions: (()=>{try{return JSON.parse(r.permissions||'[]')}catch{return []}})() })) }); }
-  catch (error) { res.status(500).json({ error: 'Failed to fetch staff' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to fetch staff', details: error?.message || String(error) }); }
 });
 app.post('/api/staff', async (req, res) => {
   try {
@@ -2349,15 +2349,15 @@ app.put('/api/staff/:id', async (req, res) => {
 });
 app.delete('/api/staff/:id', async (req, res) => {
   try { const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM StaffProfile WHERE id=?`, Number(req.params.id)); await prisma.$executeRawUnsafe(`DELETE FROM StaffProfile WHERE id=?`, Number(req.params.id)); if (rows[0]?.userId) await prisma.user.delete({ where: { id: Number(rows[0].userId) } }).catch(()=>{}); res.json({ success: true }); }
-  catch (error) { res.status(500).json({ error: 'Failed to delete staff' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to delete staff', details: error?.message || String(error) }); }
 });
 app.get('/api/staff/:id/salary', async (req, res) => {
   try { const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM StaffSalaryPayment WHERE staffId=? ORDER BY paymentDate DESC`, Number(req.params.id)); res.json({ success: true, rows, totalPaid: rows.reduce((a,r)=>a+Number(r.amount||0),0) }); }
-  catch (error) { res.status(500).json({ error: 'Failed to fetch salary history' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to fetch salary history', details: error?.message || String(error) }); }
 });
 app.post('/api/staff/:id/salary', async (req, res) => {
   try { const d=req.body||{}; await prisma.$executeRawUnsafe(`INSERT INTO StaffSalaryPayment (staffId, amount, salaryMonth, paymentDate, paymentMethod, notes) VALUES (?, ?, ?, ?, ?, ?)`, Number(req.params.id), num(d.amount), q(d.salaryMonth), (toSqlDate(d.paymentDate)||new Date()).toISOString(), q(d.paymentMethod)||'CASH', q(d.notes)); res.json({ success: true, message: 'Salary payment saved' }); }
-  catch (error) { res.status(500).json({ error: 'Failed to save salary payment' }); }
+  catch (error) { res.status(500).json({ error: 'Failed to save salary payment', details: error?.message || String(error) }); }
 });
 
 
