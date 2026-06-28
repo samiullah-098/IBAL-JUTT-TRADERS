@@ -8,12 +8,24 @@ export default function Topbar({ onMenuClick, user, onLogout }: { onMenuClick?: 
   const [notifs, setNotifs] = useState<any>({ alerts: [] });
   const [showNotifs, setShowNotifs] = useState(false);
 
-  useEffect(() => {
+  const fetchNotifs = () => {
     fetch(`${API_BASE}/api/notifications`)
       .then(r => r.json())
       .then(setNotifs)
       .catch(console.error);
+  };
+
+  useEffect(() => {
+    fetchNotifs();
   }, []);
+
+  const handleToggleNotifs = () => {
+    const nextState = !showNotifs;
+    setShowNotifs(nextState);
+    if (nextState) {
+      fetchNotifs();
+    }
+  };
 
   return (
     <div className="h-[64px] bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-6 shrink-0 shadow-sm z-10 relative print:hidden">
@@ -28,7 +40,7 @@ export default function Topbar({ onMenuClick, user, onLogout }: { onMenuClick?: 
         <div className="flex items-center gap-4 relative">
           <button className="hover:text-[var(--color-brand-accent)] transition-colors"><Users size={18} /></button>
           <button className="hover:text-red-600 text-red-500 transition-colors"><AlertTriangle size={18} /></button>
-          <button onClick={() => setShowNotifs(!showNotifs)} className="hover:text-[var(--color-brand-accent)] text-slate-500 relative transition-colors">
+          <button onClick={handleToggleNotifs} className="hover:text-[var(--color-brand-accent)] text-slate-500 relative transition-colors">
             <Bell size={18} />
             {notifs.alerts?.length > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />}
           </button>

@@ -46,8 +46,8 @@ export default function InventoryScreen() {
   // Fetch Inventory (Supports Debounce & Category Filter)
   const fetchInventory = async (search = '', category = activeTab) => {
     try {
-      let url = `${API_BASE}/api/inventory?category=${category}`;
-      if (search) url += `&search=${search}`;
+      let url = `${API_BASE}/api/inventory?category=${encodeURIComponent(category)}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
       
       const res = await fetch(url);
       const data = await res.json();

@@ -27,8 +27,8 @@ export default function ReportsScreen() {
   const loadCatalog = async () => {
     const res = await fetch(`${API_BASE}/api/reports/catalog`);
     const data = await res.json();
-    setCatalog(Array.isArray(data) ? data : []);
-    if (!selected && data.reports?.length) runReport(data.reports[0]);
+    setCatalog(data || { totalReports: 0, categories: {}, reports: [] });
+    if (!selected && data?.reports?.length) runReport(data.reports[0]);
   };
 
   const runReport = async (report: any) => {

@@ -213,16 +213,8 @@ export default function POSScreen() {
     }
   };
 
-  // Auto-calculate weight when bags or weightPerBag changes
-  useEffect(() => {
-    if (modalOpen && selectedBagIds.length === 0) {
-      const bags = parseFloat(inputBags) || 0;
-      const wpb = parseFloat(inputWeightPerBag) || 0;
-      if (bags > 0 && wpb > 0) {
-        setInputTotalWeight((bags * wpb).toFixed(2));
-      }
-    }
-  }, [inputBags, inputWeightPerBag, modalOpen, selectedBagIds]);
+  // Removed aggressive auto-calculation effect to prevent overwriting manual Total Weight input
+
 
   const handleAddToCart = () => {
     if (!selectedItem) return;
@@ -249,7 +241,7 @@ export default function POSScreen() {
       lot: selectedItem.lotNumber || '-',
       bags,
       weightPerBag,
-      totalWeight,
+      totalWeight: Number(totalWeight.toFixed(2)),
       unit: inputUnit,
       rate,
       total: totalWeight * rate,
@@ -386,9 +378,9 @@ export default function POSScreen() {
   const displayedInventory = selectedCategory === 'All' ? inventory : inventory.filter(i => i.category === selectedCategory);
 
   return (
-    <div className="pos-screen max-w-[1800px] mx-auto pb-28 lg:pb-6 min-h-0 lg:h-[calc(100vh-20px)] flex flex-col relative bg-slate-50 overflow-y-auto lg:overflow-hidden print:hidden pt-2 lg:pt-4">
+    <div className="pos-screen max-w-[1800px] mx-auto pb-28 lg:pb-6 min-h-0 lg:h-[calc(100vh-20px)] flex flex-col relative bg-slate-50 overflow-y-auto lg:overflow-hidden pt-2 lg:pt-4">
       
-      <div className="pos-workspace flex flex-col lg:flex-row gap-3 lg:gap-4 flex-1 lg:h-[calc(100vh-60px)] px-2 sm:px-4">
+      <div className="pos-workspace flex flex-col lg:flex-row gap-3 lg:gap-4 flex-1 lg:h-[calc(100vh-60px)] px-2 sm:px-4 print:hidden">
         
         {/* 1. LEFT PANEL: Customer (25%) */}
         <div className="pos-customer-panel w-full lg:w-1/4 flex flex-col gap-3 lg:gap-4">
@@ -577,7 +569,7 @@ export default function POSScreen() {
                     
                     <div className="flex justify-between items-end border-t border-slate-50 pt-1.5">
                        <div className="text-xs text-slate-600 font-medium">
-                         <span className="bg-slate-100 px-1 py-0.5 rounded mr-1">{c.totalWeight} {c.unit}</span>
+                         <span className="bg-slate-100 px-1 py-0.5 rounded mr-1">{Number(Number(c.totalWeight).toFixed(2))} {c.unit}</span>
                          x Rs {c.rate}
                        </div>
                        <div className="font-black text-slate-800">Rs {c.total.toLocaleString()}</div>
@@ -659,12 +651,22 @@ export default function POSScreen() {
             <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Number of Bags</label>
-                  <input type="number" autoFocus value={inputBags} onChange={e=>setInputBags(e.target.value)} disabled={selectedBagIds.length > 0} className="w-full border-2 border-slate-200 rounded-xl p-2.5 text-lg font-black outline-none focus:border-indigo-500 transition-colors disabled:bg-slate-100 disabled:text-slate-400" placeholder="0" />
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Number of Bags (Optional)</label>
+                  <input type="number" autoFocus value={inputBags} onChange={e=>{
+                     setInputBags(e.target.value);
+                     const b = parseFloat(e.target.value) || 0;
+                     const w = parseFloat(inputWeightPerBag) || 0;
+                     if(b>0 && w>0 && selectedBagIds.length === 0) setInputTotalWeight(parseFloat((b*w).toFixed(2)).toString());
+                  }} disabled={selectedBagIds.length > 0} className="w-full border-2 border-slate-200 rounded-xl p-2.5 text-lg font-black outline-none focus:border-indigo-500 transition-colors disabled:bg-slate-100 disabled:text-slate-400" placeholder="0" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Weight Per Bag</label>
-                  <input type="number" value={inputWeightPerBag} onChange={e=>setInputWeightPerBag(e.target.value)} disabled={selectedBagIds.length > 0} className="w-full border-2 border-slate-200 rounded-xl p-2.5 text-lg font-black outline-none focus:border-indigo-500 transition-colors disabled:bg-slate-100 disabled:text-slate-400" placeholder="0" />
+                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Weight Per Bag (Optional)</label>
+                  <input type="number" value={inputWeightPerBag} onChange={e=>{
+                     setInputWeightPerBag(e.target.value);
+                     const b = parseFloat(inputBags) || 0;
+                     const w = parseFloat(e.target.value) || 0;
+                     if(b>0 && w>0 && selectedBagIds.length === 0) setInputTotalWeight(parseFloat((b*w).toFixed(2)).toString());
+                  }} disabled={selectedBagIds.length > 0} className="w-full border-2 border-slate-200 rounded-xl p-2.5 text-lg font-black outline-none focus:border-indigo-500 transition-colors disabled:bg-slate-100 disabled:text-slate-400" placeholder="0" />
                 </div>
               </div>
 

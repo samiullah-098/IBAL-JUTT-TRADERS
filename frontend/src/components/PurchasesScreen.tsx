@@ -255,6 +255,24 @@ export default function PurchasesScreen() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden flex-1 flex flex-col">
         {/* Search */}
         <div className="p-4 bg-slate-50 border-b border-slate-100 shrink-0">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div className="bg-white border rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] uppercase font-black text-slate-400">Total Invoices</p>
+              <p className="font-black text-slate-900 text-lg">{purchases.length}</p>
+            </div>
+            <div className="bg-white border rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] uppercase font-black text-slate-400">Total Value</p>
+              <p className="font-black text-blue-600 text-lg">Rs {purchases.reduce((a, p) => a + p.totalAmount, 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-white border rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] uppercase font-black text-slate-400">Total Paid (Jama)</p>
+              <p className="font-black text-emerald-600 text-lg">Rs {purchases.reduce((a, p) => a + (p.amountPaid || 0), 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-white border rounded-xl p-3 shadow-sm">
+              <p className="text-[10px] uppercase font-black text-slate-400">Total Payable</p>
+              <p className="font-black text-rose-600 text-lg">Rs {purchases.reduce((a, p) => a + Math.max(0, p.totalAmount - (p.amountPaid || 0)), 0).toLocaleString()}</p>
+            </div>
+          </div>
           <div className="flex items-center border border-slate-200 rounded-lg px-3 py-2.5 bg-white shadow-sm focus-within:border-[var(--color-brand-accent)] focus-within:ring-1 focus-within:ring-[var(--color-brand-accent)] transition-all">
             <Search size={16} className="text-slate-400 mr-2" />
             <input 

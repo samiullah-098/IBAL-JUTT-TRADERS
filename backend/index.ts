@@ -147,25 +147,25 @@ app.get('/api/dashboard/detailed', async (req, res) => {
       allInventory,
       allCommittees
     ] = await Promise.all([
-      prisma.sale.findMany({ include: { items: true } }),
-      prisma.sale.findMany({ where: { date: { gte: start, lte: end } }, include: { items: true } }),
-      prisma.sale.findMany({ where: { date: { gte: todayStart, lte: todayEnd } }, include: { items: true } }),
-      prisma.sale.findMany({ where: { date: { gte: weekStart, lte: todayEnd } } }),
-      prisma.sale.findMany({ where: { date: { gte: monthStart, lte: todayEnd } } }),
+      prisma.transaction.findMany({ where: { type: 'SALE' }, include: { Items: { include: { inventoryItem: true } }, party: true } }),
+      prisma.transaction.findMany({ where: { type: 'SALE', date: { gte: start, lte: end } }, include: { Items: { include: { inventoryItem: true } }, party: true } }),
+      prisma.transaction.findMany({ where: { type: 'SALE', date: { gte: todayStart, lte: todayEnd } }, include: { Items: { include: { inventoryItem: true } }, party: true } }),
+      prisma.transaction.findMany({ where: { type: 'SALE', date: { gte: weekStart, lte: todayEnd } } }),
+      prisma.transaction.findMany({ where: { type: 'SALE', date: { gte: monthStart, lte: todayEnd } } }),
       
       prisma.purchase.findMany({ include: { items: true } }),
       prisma.purchase.findMany({ where: { purchaseDate: { gte: start, lte: end } } }),
       
-      prisma.expense.findMany({ where: { date: { gte: start, lte: end } } }),
+      Promise.resolve([]), // no expense table
       prisma.party.findMany(),
       prisma.inventoryItem.findMany(),
       prisma.committee.findMany({ where: { status: 'ACTIVE' } })
     ]);
 
-    const calcSaleTotal = (sales: any[]) => sales.reduce((sum, s) => sum + Number(s.totalAmount || 0), 0);
+    const calcSaleTotal = (sales: any[]) => sales.reduce((sum, s) => sum + Number(s.amount || 0), 0);
     const calcProfit = (sales: any[]) => sales.reduce((sum, s) => {
-       const profit = s.items?.reduce((pSum: number, item: any) => {
-          const cost = Number(item.purchaseRate || 0) * Number(item.quantity || 0);
+       const profit = s.Items?.reduce((pSum: number, item: any) => {
+          const cost = Number(item.inventoryItem?.purchaseRate || 0) * Number(item.quantity || 0);
           const revenue = Number(item.total || 0);
           return pSum + (revenue - cost);
        }, 0) || 0;
@@ -242,7 +242,7 @@ app.get('/api/dashboard/detailed', async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    res.status(500).json({ error: 'Failed to fetch dashboard data', details: error?.message || String(error) });
   }
 });
 
@@ -910,9 +910,66 @@ app.post('/api/sales', async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Failed to create sale', details: error?.message || String(error) });
+    res.status(500).json({ error: 'Failed to create sale', details: String(error) });
   }
 });
+
+app.delete('/api/sales/:id', async (req, res) => {
+  try {
+    const saleId = Number(req.params.id);
+    await prisma.$transaction(async (tx) => {
+      const sale = await tx.transaction.findUnique({
+        where: { id: saleId },
+        include: { Items: true }
+      });
+      if (!sale || sale.type !== 'SALE') throw new Error('Sale not found');
+
+      // 1. Restore Inventory Stock & Bags
+      for (const item of sale.Items) {
+        await tx.inventoryItem.update({
+          where: { id: item.inventoryItemId },
+          data: { quantity: { increment: item.quantity } }
+        });
+        
+        await tx.inventoryBag.updateMany({
+          where: { saleItemId: item.id },
+          data: { status: 'AVAILABLE', saleItemId: null, saleRate: null }
+        });
+      }
+
+      // 2. Reverse Khata (Subtract Sale Amount)
+      if (sale.partyId) {
+        await tx.party.update({
+          where: { id: sale.partyId },
+          data: { outstanding: { decrement: sale.amount } }
+        });
+      }
+
+      // 3. Reverse any auto-created Payment In
+      const payment = await tx.transaction.findFirst({
+        where: { type: 'PAYMENT_IN', description: `Payment against Sale #${sale.id}` }
+      });
+      if (payment && payment.partyId) {
+        // Reverse payment khata
+        await tx.party.update({
+          where: { id: payment.partyId },
+          data: { outstanding: { increment: payment.amount } }
+        });
+        await tx.transaction.delete({ where: { id: payment.id } });
+      }
+
+      // 4. Delete Sale Items & Sale
+      await tx.transactionItem.deleteMany({ where: { transactionId: saleId } });
+      await tx.transaction.delete({ where: { id: saleId } });
+    });
+    
+    res.json({ success: true, message: 'Sale deleted successfully' });
+  } catch (error) {
+    console.error('Delete sale error:', error);
+    res.status(500).json({ error: 'Failed to delete sale', details: String(error) });
+  }
+});
+
 // -- Advanced Party Khata APIs --
 app.get('/api/parties', async (req, res) => {
   try {
@@ -1648,14 +1705,33 @@ const writeSoftwareSettings = (settings: any) => {
   return safe;
 };
 
-const createDatabaseBackup = (type: 'manual' | 'auto' | 'pre-reset' = 'manual') => {
+const createDatabaseBackup = async (type: 'manual' | 'auto' | 'pre-reset' = 'manual') => {
   ensureDataFolders();
-  const { backupDir, dbPath } = getSettingsPaths();
-  if (!fs.existsSync(dbPath)) throw new Error('Database file not found');
+  const { backupDir } = getSettingsPaths();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const fileName = `${type}-backup-${stamp}.db`;
+  const fileName = `${type}-backup-${stamp}.json`;
   const dest = path.join(backupDir, fileName);
-  fs.copyFileSync(dbPath, dest);
+  
+  // Export all tables to JSON
+  const data = {
+    user: await prisma.user.findMany(),
+    inventoryItem: await prisma.inventoryItem.findMany(),
+    party: await prisma.party.findMany(),
+    transaction: await prisma.transaction.findMany(),
+    transactionItem: await prisma.transactionItem.findMany(),
+    purchase: await prisma.purchase.findMany(),
+    purchaseItem: await prisma.purchaseItem.findMany(),
+    committee: await prisma.committee.findMany(),
+    committeeParticipant: await prisma.committeeParticipant.findMany(),
+    committeeMonth: await prisma.committeeMonth.findMany(),
+    committeeCollection: await prisma.committeeCollection.findMany(),
+    committeeWinner: await prisma.committeeWinner.findMany(),
+    committeePayout: await prisma.committeePayout.findMany(),
+    committeeAuditLog: await prisma.committeeAuditLog.findMany(),
+    inventoryBag: await prisma.inventoryBag.findMany()
+  };
+  
+  fs.writeFileSync(dest, JSON.stringify(data, null, 2));
   return {
     fileName,
     type,
@@ -1677,7 +1753,7 @@ const listBackups = () => {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 };
 
-const createAutoBackupIfDue = () => {
+const createAutoBackupIfDue = async () => {
   try {
     const settings = readSoftwareSettings();
     if (!settings.autoBackupEnabled) return;
@@ -1685,7 +1761,7 @@ const createAutoBackupIfDue = () => {
     const today = new Date().toISOString().slice(0, 10);
     const last = fs.existsSync(lastAutoFile) ? fs.readFileSync(lastAutoFile, 'utf8').trim() : '';
     if (last !== today) {
-      createDatabaseBackup('auto');
+      await createDatabaseBackup('auto');
       fs.writeFileSync(lastAutoFile, today);
       console.log('Daily automatic backup completed.');
     }
@@ -2050,9 +2126,9 @@ app.get('/api/settings/backups', (req, res) => {
   }
 });
 
-app.post('/api/settings/backup/manual', (req, res) => {
+app.post('/api/settings/backup/manual', async (req, res) => {
   try {
-    const backup = createDatabaseBackup('manual');
+    const backup = await createDatabaseBackup('manual');
     res.json({ success: true, message: 'Manual backup created successfully', backup });
   } catch (error) {
     console.error(error);
@@ -2066,12 +2142,9 @@ app.post('/api/settings/reset-all', async (req, res) => {
     if (confirmText !== 'RESET IQBAL JUTT') {
       return res.status(400).json({ error: 'Invalid confirmation text' });
     }
-    const backup = createDatabaseBackup('pre-reset');
+    const backup = await createDatabaseBackup('pre-reset');
     await prisma.$transaction(async (tx) => {
-      await tx.$executeRawUnsafe('DELETE FROM Expense').catch(() => {});
-      await tx.$executeRawUnsafe('DELETE FROM QuotationItem').catch(() => {});
-      await tx.$executeRawUnsafe('DELETE FROM Quotation').catch(() => {});
-      await tx.$executeRawUnsafe('DELETE FROM StaffSalaryPayment').catch(() => {});
+      await tx.inventoryBag.deleteMany();
       await tx.committeeAuditLog.deleteMany();
       await tx.committeePayout.deleteMany();
       await tx.committeeWinner.deleteMany();

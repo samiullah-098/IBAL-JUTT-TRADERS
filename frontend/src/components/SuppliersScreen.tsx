@@ -105,11 +105,26 @@ export default function SuppliersScreen() {
 
   return (
     <div className="max-w-[1600px] mx-auto pb-10 relative h-full flex flex-col">
-      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between mb-6 shrink-0 gap-4">
+      <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between mb-4 shrink-0 gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-800 font-heading">Suppliers</h2>
           <p className="text-sm text-slate-500 mt-0.5">Manage suppliers, track purchased maal, and handle payments & udhar</p>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6 shrink-0">
+         <div className="bg-white border rounded-xl p-4 shadow-sm">
+           <p className="text-[10px] uppercase font-black text-slate-400">Total Suppliers</p>
+           <p className="font-black text-slate-900 text-xl">{suppliers.length}</p>
+         </div>
+         <div className="bg-white border rounded-xl p-4 shadow-sm">
+           <p className="text-[10px] uppercase font-black text-slate-400">Total Payable (Udhar)</p>
+           <p className="font-black text-rose-600 text-xl">Rs {suppliers.filter(s => s.outstanding < 0).reduce((a, s) => a + Math.abs(s.outstanding), 0).toLocaleString()}</p>
+         </div>
+         <div className="bg-white border rounded-xl p-4 shadow-sm">
+           <p className="text-[10px] uppercase font-black text-slate-400">Total Advance (Jama)</p>
+           <p className="font-black text-emerald-600 text-xl">Rs {suppliers.filter(s => s.outstanding > 0).reduce((a, s) => a + s.outstanding, 0).toLocaleString()}</p>
+         </div>
       </div>
 
       <div className="flex gap-6 flex-1 overflow-hidden">
