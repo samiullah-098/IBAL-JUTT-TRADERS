@@ -27,7 +27,7 @@ export default function ReportsScreen() {
   const loadCatalog = async () => {
     const res = await fetch(`${API_BASE}/api/reports/catalog`);
     const data = await res.json();
-    setCatalog(data);
+    setCatalog(Array.isArray(data) ? data : []);
     if (!selected && data.reports?.length) runReport(data.reports[0]);
   };
 
@@ -37,7 +37,7 @@ export default function ReportsScreen() {
     try {
       const res = await fetch(`${API_BASE}/api/reports/run/${report.key}`);
       const data = await res.json();
-      setReportData(data);
+      setReportData(data && !data.error ? data : []);
     } catch (err) {
       console.error('Report failed', err);
       setReportData({ error: 'Report failed to load' });

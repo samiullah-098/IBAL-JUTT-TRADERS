@@ -50,9 +50,12 @@ export default function PurchasesScreen() {
         fetch(`${API_BASE}/api/inventory`)
       ]);
       
-      setPurchases(await purchasesRes.json());
-      setParties(await partiesRes.json());
-      setInventoryItems(await invRes.json());
+      const dataPurchases = await purchasesRes.json();
+      const dataParties = await partiesRes.json();
+      const dataInv = await invRes.json();
+      setPurchases(Array.isArray(dataPurchases) ? dataPurchases : []);
+      setParties(Array.isArray(dataParties) ? dataParties : []);
+      setInventoryItems(Array.isArray(dataInv) ? dataInv : []);
     } catch (err) {
       console.error("Failed to fetch data", err);
     }

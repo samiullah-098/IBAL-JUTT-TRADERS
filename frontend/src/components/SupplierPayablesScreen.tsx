@@ -21,7 +21,7 @@ export default function SupplierPayablesScreen() {
     if (selectedSupplierId) {
       fetch(`${API_BASE}/api/suppliers/${selectedSupplierId}/analysis`)
         .then(res => res.json())
-        .then(data => setSupplierData(data));
+        .then(data => setSupplierData(Array.isArray(data) ? data : []));
     }
   }, [selectedSupplierId]);
 

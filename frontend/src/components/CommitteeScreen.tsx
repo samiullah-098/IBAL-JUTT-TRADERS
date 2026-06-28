@@ -95,7 +95,7 @@ export default function CommitteeScreen() {
       setLoading(true);
       setError('');
       const data = await fetchJson(`${API}/committees/${id}`);
-      setCommitteeDetail(data);
+      setCommitteeDetail(data && !data.error ? data : null);
       const firstPending = data.months?.find((m: any) => m.status === 'PENDING') || data.months?.[0];
       setSelectedMonthId((prev) => prev || firstPending?.id || null);
     } catch (err: any) {

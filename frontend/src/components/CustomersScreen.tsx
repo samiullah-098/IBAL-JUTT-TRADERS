@@ -25,7 +25,7 @@ export default function CustomersScreen() {
     if (selectedCustomerId) {
       fetch(`${API_BASE}/api/customers/${selectedCustomerId}/analysis`)
         .then(res => res.json())
-        .then(data => setCustomerData(data));
+        .then(data => setCustomerData(Array.isArray(data) ? data : []));
     }
   }, [selectedCustomerId]);
 
